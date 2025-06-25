@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Funcionario {
+  id        Int        @id @default(autoincrement())
+  nome      String
+  cargo     String
+  producoes Producao[]
+}
+
+model Produto {
+  id         Int                 @id @default(autoincrement())
+  nome       String
+  referencia String
+  categoria  String
+  lote       String
+  validade   DateTime
+  producoes  Producao[]
+  composicao ComposicaoProduto[] // ✅ Adicionado: relação com ComposicaoProduto
+}
+
+model Producao {
+  id                Int         @id @default(autoincrement())
+  produtoId         Int
+  produto           Produto     @relation(fields: [produtoId], references: [id])
+  funcionarioId     Int
+  funcionario       Funcionario @relation(fields: [funcionarioId], references: [id])
+  liderId           Int
+  lider             Usuario     @relation("LiderInicio", fields: [liderId], references: [id])
+  liderFinalizouId  Int?
+  liderFinalizou    Usuario?    @relation("LiderFim", fields: [liderFinalizouId], references: [id])
+  inicio            DateTime
+  fim               DateTime?
+  observacoes       String?
+  observacoesFinais String?
+  rotulo            String?
+
+  etapas               EtapaProducao[]
+  movimentacoesEstoque MovimentacaoEstoque[]
+  perdas               PerdaInsumo[]
+}
+
+model Usuario {
+  id           Int    @id @default(autoincrement())
+  nome         String
+  email        String @unique
+  senha        String
+  nivel_acesso String @default("FUNCIONARIO") // ou LIDER, ADMIN
+
+  producoesInicio    Producao[] @relation("LiderInicio")
+  producoesFinalizou Producao[] @relation("LiderFim")
+}
+
+model EtapaProducao {
+  id         Int      @id @default(autoincrement())
+  producaoId Int
+  producao   Producao @relation(fields: [producaoId], references: [id])
+  tipo       String // Ex: "pausa", "retomada", "observacao"
+  descricao  String
+  dataHora   DateTime @default(now())
+}
+
+model Insumo {
+  id            Int                   @id @default(autoincrement())
+  nome          String
+  tipo          String // Ex: matéria-prima, embalagem, solvente
+  unidade       String // Ex: kg, L, mL, unidade
+  estoque       EstoqueInsumo?
+  movimentacoes MovimentacaoEstoque[]
+  perdas        PerdaInsumo[]
+  composicoes   ComposicaoProduto[] // ✅ Adicionado: relação com ComposicaoProduto
+}
+
+model PerdaInsumo {
+  id         Int      @id @default(autoincrement())
+  insumo     Insumo   @relation(fields: [insumoId], references: [id])
+  insumoId   Int
+  producao   Producao @relation(fields: [producaoId], references: [id])
+  producaoId Int
+  tipo       String // "perda" ou "sobra"
+  quantidade Float
+  observacao String?
+}
+
+model EstoqueInsumo {
+  id           Int      @id @default(autoincrement())
+  insumo       Insumo   @relation(fields: [insumoId], references: [id])
+  insumoId     Int      @unique
+  quantidade   Float
+  atualizadoEm DateTime @default(now())
+}
+
+model MovimentacaoEstoque {
+  id         Int       @id @default(autoincrement())
+  insumo     Insumo    @relation(fields: [insumoId], references: [id])
+  insumoId   Int
+  tipo       String // "entrada" ou "saida"
+  quantidade Float
+  data       DateTime  @default(now())
+  observacao String?
+  producao   Producao? @relation(fields: [producaoId], references: [id])
+  producaoId Int?
+}
+
+model ComposicaoProduto {
+  id         Int     @id @default(autoincrement())
+  produto    Produto @relation(fields: [produtoId], references: [id])
+  produtoId  Int
+  insumo     Insumo  @relation(fields: [insumoId], references: [id])
+  insumoId   Int
+  quantidade Float
+}
