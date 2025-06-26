@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅
 import api from '../services/api';
 import "../styles/Login.css";
 
@@ -7,6 +8,7 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
+  const navigate = useNavigate(); // ✅
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,17 +19,17 @@ export default function Login() {
       setSucesso(`Bem-vindo, ${res.data.usuario.nome}!`);
       setErro('');
 
-      // Aqui você pode guardar o nível de acesso para redirecionamento futuro
       localStorage.setItem('usuario', JSON.stringify(res.data.usuario));
 
-      // Redirecionar com base no nível de acesso (exemplo)
       const nivel = res.data.usuario.nivel_acesso;
+
+      // ✅ Redirecionar sem recarregar a aplicação
       if (nivel === 'admin') {
-        window.location.href = '/admin';
+        navigate('/dashboard-admin'); // 🔁 Corrigido
       } else if (nivel === 'lider') {
-        window.location.href = '/dashboard-lider';
+        navigate('/dashboard-lider');
       } else {
-        window.location.href = '/producao';
+        navigate('/producao');
       }
 
     } catch (err) {
