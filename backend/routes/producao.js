@@ -203,11 +203,11 @@ router.get('/admin/all', async (req, res) => {
   try {
     const producoes = await prisma.producao.findMany({
       where: { status: 'finalizada' },
-      orderBy: { dataFim: 'desc' },
+      orderBy: { fim: 'desc' }, // Corrigido: campo correto de ordenação
       include: {
         produto: true,
         funcionario: true,
-        liderFim: true,
+        liderFinalizou: true, // Corrigido: nome correto da relação no schema
       },
     });
 
@@ -216,8 +216,6 @@ router.get('/admin/all', async (req, res) => {
     console.error(err);
     res.status(500).json({ erro: 'Erro ao buscar produções para admin' });
   }
-
-
 });
 
 export default router;

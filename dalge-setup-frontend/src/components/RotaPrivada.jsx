@@ -4,11 +4,13 @@ export default function RotaPrivada({ children, nivelNecessario }) {
   const usuario = JSON.parse(localStorage.getItem('usuario'));
 
   if (!usuario) {
-    return <Navigate to="/" replace />;
+    // Usuário não está logado
+    return <Navigate to="/" />;
   }
 
   if (nivelNecessario && usuario.nivel_acesso !== nivelNecessario) {
-    return <Navigate to="/" replace />;
+    // Usuário logado, mas sem o nível necessário
+    return <Navigate to="/" />;
   }
 
   return children;

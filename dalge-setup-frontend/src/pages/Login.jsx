@@ -24,13 +24,14 @@ export default function Login() {
       const nivel = res.data.usuario.nivel_acesso;
 
       // ✅ Redirecionar sem recarregar a aplicação
-      if (nivel === 'admin') {
-        navigate('/dashboard-admin'); // 🔁 Corrigido
-      } else if (nivel === 'lider') {
-        navigate('/dashboard-lider');
-      } else {
-        navigate('/producao');
-      }
+        if (nivel === 'admin') {
+          navigate('/admin'); // 👈 Rota correta
+        } else if (nivel === 'lider') {
+          navigate('/dashboard-lider');
+        } else {
+          navigate('/producao');
+        }
+
 
     } catch (err) {
       setErro('Email ou senha inválidos');
