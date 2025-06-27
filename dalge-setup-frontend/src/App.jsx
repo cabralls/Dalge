@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
+import DashboardAdmin from './pages/DashboardAdmin';
 import DashboardLider from './pages/DashboardLider';
 import Producao from './pages/Producao';
 import RotaPrivada from './components/RotaPrivada';
@@ -13,14 +13,16 @@ export default function App() {
         <Route path="/" element={<Login />} />
 
         {/* Rota privada para ADMIN */}
-        <Route
-          path="/admin"
-          element={
-            <RotaPrivada nivelNecessario="admin">
-              <AdminDashboard />
-            </RotaPrivada>
-          }
-        />
+       <Route
+        path="/admin"
+        element={
+        <RotaPrivada nivelNecessario="admin">
+          <DashboardAdmin />
+        </RotaPrivada>
+      }
+    />
+
+        
 
         {/* Rota privada para LÍDER */}
         <Route
