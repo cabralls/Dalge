@@ -26,8 +26,9 @@ router.post('/', async (req, res) => {
       data: {
         produtoId: parseInt(produtoId),
         funcionarioId: parseInt(funcionarioId),
-        dataInicio: new Date(),
+        inicio: new Date(),
         status: 'em_andamento',
+        liderId: 1 // ou outro valor, dependendo da lógica
       },
     });
     res.status(201).json(novaProducao);
@@ -45,7 +46,7 @@ router.post('/:id/etapas', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const etapa = await prisma.etapa.create({
+    const etapa = await prisma.etapaProducao.create({
       data: {
         producaoId: parseInt(id),
         tipo,
@@ -61,17 +62,14 @@ router.post('/:id/etapas', async (req, res) => {
 });
 
 /**
- * Buscar etapas com filtros (data e tipo)
+ * Buscar etapas com filtros
  */
 router.get('/:id/etapas', async (req, res) => {
   const { id } = req.params;
   const { tipo, inicio, fim } = req.query;
 
   try {
-    const where = {
-      producaoId: parseInt(id),
-    };
-
+    const where = { producaoId: parseInt(id) };
     if (tipo) where.tipo = tipo;
     if (inicio && fim) {
       where.dataHora = {
@@ -80,7 +78,7 @@ router.get('/:id/etapas', async (req, res) => {
       };
     }
 
-    const etapas = await prisma.etapa.findMany({
+    const etapas = await prisma.etapaProducao.findMany({
       where,
       orderBy: { dataHora: 'asc' },
     });
@@ -93,7 +91,7 @@ router.get('/:id/etapas', async (req, res) => {
 });
 
 /**
- * Buscar produções por líder (após login)
+ * Buscar produções por líder
  */
 router.get('/', async (req, res) => {
   const { liderId } = req.query;
@@ -101,10 +99,10 @@ router.get('/', async (req, res) => {
   try {
     const producoes = await prisma.producao.findMany({
       where: {
-        liderFimId: parseInt(liderId),
+        liderFinalizouId: parseInt(liderId),
         status: 'finalizada',
       },
-      orderBy: { dataFim: 'desc' },
+      orderBy: { fim: 'desc' },
     });
 
     res.json(producoes);
@@ -115,9 +113,8 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * Finalizar produção com validação do líder e foto
+ * Finalizar produção (com validação do líder e foto)
  */
-
 router.post('/finalizar', async (req, res) => {
   const { liderId, producaoId, perdasInsumos } = req.body;
 
@@ -130,16 +127,15 @@ router.post('/finalizar', async (req, res) => {
       return res.status(404).json({ error: 'Produção não encontrada' });
     }
 
-    // Atualiza a produção como finalizada
     const producaoFinalizada = await prisma.producao.update({
       where: { id: Number(producaoId) },
       data: {
-        horarioFinal: new Date(),
-        finalizadaPorId: Number(liderId),
+        fim: new Date(),
+        liderFinalizouId: Number(liderId),
+        status: 'finalizada',
       },
     });
 
-    // Registra perdas e sobras (se houver)
     if (perdasInsumos && perdasInsumos.length > 0) {
       for (const perda of perdasInsumos) {
         await prisma.perdaInsumo.create({
@@ -168,9 +164,9 @@ router.post('/:id/finalizar', upload.single('fotoRotuloFinal'), async (req, res)
   try {
     const lider = await prisma.usuario.findFirst({
       where: {
-        usuario: liderUsuario,
+        email: liderUsuario,
         senha: liderSenha,
-        nivelAcesso: 'lider',
+        nivel_acesso: 'lider',
       },
     });
 
@@ -181,11 +177,11 @@ router.post('/:id/finalizar', upload.single('fotoRotuloFinal'), async (req, res)
     const producaoFinal = await prisma.producao.update({
       where: { id: parseInt(id) },
       data: {
-        dataFim: new Date(),
-        liderFimId: lider.id,
+        fim: new Date(),
+        liderFinalizouId: lider.id,
         status: 'finalizada',
         observacoesFinais,
-        fotoRotuloFinal: req.file ? req.file.filename : null,
+        rotulo: req.file ? req.file.filename : null,
       },
     });
 
@@ -203,11 +199,11 @@ router.get('/admin/all', async (req, res) => {
   try {
     const producoes = await prisma.producao.findMany({
       where: { status: 'finalizada' },
-      orderBy: { fim: 'desc' }, // Corrigido: campo correto de ordenação
+      orderBy: { fim: 'desc' }, // ✅ CAMPO CORRETO
       include: {
         produto: true,
         funcionario: true,
-        liderFinalizou: true, // Corrigido: nome correto da relação no schema
+        liderFinalizou: true,
       },
     });
 
